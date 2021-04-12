@@ -8,12 +8,13 @@ function naga.tick(args)
   args.state.stars = args.state.stars or {}
   while #args.state.stars < 50 do
     table.insert(args.state.stars,
-      {x = love.math.random() * 1280, y = love.math.random() * 720,
+      {x = love.math.random() * 1280,
+       y = love.math.random() * 720,
        z = love.math.random()})
   end
 
+  -- Move stars with wraparound and draw.
   for _, star in ipairs(args.state.stars) do
-    -- Move star position with wraparound.
     star.y = (star.y + star.z) % (720 + 24)
 
     love.graphics.setColor(1, 1, 1, star.z)
@@ -24,10 +25,10 @@ function naga.tick(args)
 
   -- Lasers that move upwards when fired.
   args.state.lasers = args.state.lasers or {}
-  for _, bullet in ipairs(args.state.lasers) do
-    bullet.y = bullet.y - 20
+  for _, laser in ipairs(args.state.lasers) do
+    laser.y = laser.y - 20
     love.graphics.draw(naga.image("assets/laser.png"),
-      bullet.x, bullet.y, 0, 1, 1, 9 / 2, 54 / 2)
+      laser.x, laser.y, 0, 1, 1, 9 / 2, 54 / 2)
   end
 
   -- Create a ship that is moved with the arrow keys.
