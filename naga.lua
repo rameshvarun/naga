@@ -38,11 +38,15 @@ function love.load()
 end
 
 local heldKeys = {}
+local pressedKeys = {}
+local releasedKeys = {}
 function love.keypressed(key, scancode, isrepeat)
   heldKeys[key] = true
+  pressedKeys[key] = true
 end
 function love.keyreleased(key)
   heldKeys[key] = nil
+  releasedKeys[key] = nil
 end
 
 function love.update(dt)
@@ -103,16 +107,22 @@ function naga.frame()
   love.graphics.setScissor()
   love.graphics.clear(0,0,0)
 
+  --
   love.graphics.setScissor(love.graphics.getWidth() / 2 - actualSize.width / 2,
     love.graphics.getHeight() / 2 - actualSize.height / 2, actualSize.width, actualSize.height)
 
-  -- Construct the initial args array
+  -- Construct the args array to pass in to the user-defined tick.
   local args = {}
   args.state = state
-  args.keyboard = { held = heldKeys }
+  args.keyboard = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
 
+  -- Run the game tick.
   naga.tick(args)
 
+  pressedKeys = {}
+  releasedKeys = {}
+
+  -- Return the scissor to the full screen.
   love.graphics.setScissor()
 end
 
@@ -141,6 +151,25 @@ function naga.image(filename)
     return image
   end
 end
+
+function naga.sound(filename)
+  -- TODO: Pool sounds so a new source is only created if all the sources
+  -- in the pool are currently playing.
+  love.audio.newSource(filename, 'static'):play()
+end
+
+local currentMusic = nil
+function naga.music(filename, volume)
+  volume = volume or 1.0
+  -- TODO: Switch music by automatically fading out.
+  if currentMusic == nil then
+    currentMusic = love.audio.newSource(filename, 'stream')
+    currentMusic:setVolume(volume)
+    currentMusic:setLooping(true)
+    currentMusic:play()
+  end
+end
+
 
 function naga.scan(path, eachFunc)
   local items = love.filesystem.getDirectoryItems(path)
