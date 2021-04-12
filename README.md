@@ -1,4 +1,4 @@
-# Naga
+# Naga [WIP]
 A framework for [Love2D](https://love2d.org/), heavily inspired by [DragonRuby](https://dragonruby.org/).
 
 ## Features
