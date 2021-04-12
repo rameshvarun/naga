@@ -1,9 +1,9 @@
 # Naga
-A framework for [Love2D](https://love2d.org/) heavily inspired by [DragonRuby](https://dragonruby.org/).
+A framework for [Love2D](https://love2d.org/), heavily inspired by [DragonRuby](https://dragonruby.org/).
 
 ## Features
-- Data-oriented design
-- Live-reload on file save (currently only "main.lua")
+- A single `tick` function that replaces `load`, `update`, and `draw`
+- Live-reload on file save (currently only reloads `main.lua`)
 - Full access to the Love2D engine and it's ecosystem
 
 ## Installation
