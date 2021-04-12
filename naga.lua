@@ -71,8 +71,16 @@ function naga.reload()
   require("main")
 end
 
-function love.draw()
-  local timestep = 1 / naga.ticksPerSecond
+local canvas = love.graphics.newCanvas()
+
+function naga.frame()
+  if love.graphics.getWidth() ~= canvas:getWidth()
+    or love.graphics.getHeight() ~= canvas:getHeight() then
+    canvas = love.graphics.newCanvas()
+  end
+
+  love.graphics.setCanvas(canvas)
+  love.graphics.clear()
 
   -- Scale and letterbox the game canvas.
   local windowAspect = love.graphics.getWidth() / love.graphics.getHeight()
@@ -101,10 +109,26 @@ function love.draw()
   -- Construct the initial args array
   local args = {}
   args.state = state
-  args.dt = timestep
   args.keyboard = { held = heldKeys }
 
   naga.tick(args)
+
+  love.graphics.setScissor()
+end
+
+local frameTimeAccumulator = 0
+function love.draw()
+  frameTimeAccumulator = frameTimeAccumulator + love.timer.getDelta()
+  local timestep = 1 / naga.ticksPerSecond
+
+  while frameTimeAccumulator >= timestep do
+    naga.frame()
+    frameTimeAccumulator = frameTimeAccumulator - timestep
+  end
+
+  love.graphics.setCanvas()
+  love.graphics.origin()
+  love.graphics.draw(canvas, 0, 0)
 end
 
 local imageCache = {}
