@@ -28,16 +28,15 @@ function naga.tick(args)
   naga.music("assets/music.ogg", 0.5) -- Looping background music.
 
   -- Create 50 randomly positioned stars.
-  args.state.stars = args.state.stars or {}
-  while #args.state.stars < 50 do
-    table.insert(args.state.stars,
-      {x = love.math.random() * 1280,
-       y = love.math.random() * 720,
-       z = love.math.random()})
+  local stars = args.state:init("stars", {})
+  while #stars < 50 do
+    table.insert(stars, {x = love.math.random() * 1280,
+                         y = love.math.random() * 720,
+                         z = love.math.random()})
   end
 
-  -- Move stars with wraparound. Draw the stars.
-  for _, star in ipairs(args.state.stars) do
+  -- Move stars with wraparound and draw.
+  for _, star in ipairs(stars) do
     star.y = (star.y + star.z) % (720 + 24)
 
     love.graphics.setColor(1, 1, 1, star.z)
@@ -47,27 +46,24 @@ function naga.tick(args)
   end
 
   -- Lasers that move upwards when fired.
-  args.state.lasers = args.state.lasers or {}
-  for _, laser in ipairs(args.state.lasers) do
+  local lasers = args.state:init("lasers", {})
+  for _, laser in ipairs(lasers) do
     laser.y = laser.y - 20
     love.graphics.draw(naga.image("assets/laser.png"),
       laser.x, laser.y, 0, 1, 1, 9 / 2, 54 / 2)
   end
 
   -- Create a ship that is moved with the arrow keys.
-  args.state.ship = args.state.ship or {x = 1280 / 2, y = 720 / 2}
-  args.state.ship.x = args.state.ship.x +
-    (args.keyboard.held.right and 10 or 0) - (args.keyboard.held.left and 10 or 0)
-  args.state.ship.y = args.state.ship.y +
-    (args.keyboard.held.down and 10 or 0) - (args.keyboard.held.up and 10 or 0)
+  local ship = args.state:init("ship", {x = 1280 / 2, y = 720 / 2})
+  ship.x = ship.x + (args.keys.held.right and 10 or 0) - (args.keys.held.left and 10 or 0)
+  ship.y = ship.y + (args.keys.held.down and 10 or 0) - (args.keys.held.up and 10 or 0)
 
   -- Draw the ship.
-  love.graphics.draw(naga.image("assets/ship.png"),
-    args.state.ship.x, args.state.ship.y, 0, 1, 1, 99 / 2, 75 / 2)
+  love.graphics.draw(naga.image("assets/ship.png"), ship.x, ship.y, 0, 1, 1, 99 / 2, 75 / 2)
 
   -- Shoot lasers with space.
-  if args.keyboard.pressed.space then
-    table.insert(args.state.lasers, {x = args.state.ship.x, y = args.state.ship.y - 40})
+  if args.keys.pressed.space then
+    table.insert(lasers, {x = ship.x, y = ship.y - 40})
     naga.sound("assets/laser.ogg")
   end
 end

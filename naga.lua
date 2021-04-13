@@ -24,7 +24,12 @@ local naga = {
   lastScanTime = 0,
 }
 
-local state = {}
+local state = {
+  init = function(self, key, value)
+    if self[key] == nil then self[key] = value end
+    return self[key]
+  end
+}
 
 -- The user will override this function for their game.
 function naga.tick(args) end
@@ -114,7 +119,7 @@ function naga.frame()
   -- Construct the args array to pass in to the user-defined tick.
   local args = {}
   args.state = state
-  args.keyboard = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
+  args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
 
   -- Run the game tick.
   naga.tick(args)
