@@ -34,6 +34,8 @@ naga.console.ENV.vec = vec
 naga.console.ENV.util = util
 naga.console.ENV.console = console
 
+naga.debug = false
+
 local lastModifiedTime = {}
 local scanPeriod = 0.5
 local lastScanTime = love.timer.getTime()
@@ -66,6 +68,12 @@ local heldKeys = {}
 local pressedKeys = {}
 local releasedKeys = {}
 function love.keypressed(key, scancode, isrepeat)
+  if key == 'f1' then
+    naga.debug = not naga.debug
+
+    if naga.debug then print("Entering debug mode.")
+    else print("Exiting debug mode.") end
+  end
   naga.console.keypressed(key, scancode, isrepeat)
 
   if not naga.console.isEnabled() then
@@ -149,8 +157,9 @@ function naga.frame()
   -- Construct the args array to pass in to the user-defined tick.
   local args = {}
   args.state = state
-  args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
+  args.debug = naga.debug
 
+  args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
   args.keys.arrows = naga.vec(
     (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0),
     (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0))
