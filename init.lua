@@ -58,6 +58,8 @@ end
 local state = initializeState()
 
 naga.console.COMMANDS.reset = function() state = initializeState() end
+naga.console.COMMANDS.pause = function() naga.paused = true end
+naga.console.COMMANDS.unpause = function() naga.paused = false end
 
 -- The user will override this function for their game.
 function naga.tick(args) end
@@ -143,11 +145,14 @@ function naga.frame()
   local actualSize = {width = scale * naga.canvasSize.width,
     height = scale * naga.canvasSize.height}
 
-  love.graphics.origin()
-  love.graphics.translate(love.graphics.getWidth() / 2 - actualSize.width / 2,
-    love.graphics.getHeight() / 2 - actualSize.height / 2)
-  love.graphics.scale(scale, scale)
+  local offset = {
+    x = love.graphics.getWidth() / 2 - actualSize.width / 2,
+    y = love.graphics.getHeight() / 2 - actualSize.height / 2
+  }
 
+  love.graphics.origin()
+  love.graphics.translate(offset.x, offset.y)
+  love.graphics.scale(scale, scale)
   love.graphics.setScissor()
   love.graphics.clear(0,0,0)
 
@@ -167,6 +172,9 @@ function naga.frame()
   if args.keys.arrows:len() > 1 then
     args.keys.arrows:normalize()
   end
+
+  args.mouse = {}
+  args.mouse.pos = naga.vec(love.mouse.getX() - offset.x, love.mouse.getY() - offset.y) / scale
 
   -- Run the game tick.
   naga.tick(args)

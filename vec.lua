@@ -51,6 +51,15 @@ function vec.__mul(a, b)
   end
 end
 
+function vec.__div(a, b)
+  if isvec(a) and isnum(b) then
+    return vec(a.x / b, a.y / b)
+  else
+    error()
+  end
+end
+
+
 function vec:__tostring()
   return "<" .. tostring(self.x) .. ", " .. tostring(self.y) .. ">"
 end
