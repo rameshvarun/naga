@@ -21,7 +21,7 @@ local naga = require "naga"
 </p>
 
 ```lua
-local naga = require "." -- Load naga.
+local naga = require "naga" -- Load naga.
 local vec, color = naga.vec, naga.color -- Shortcuts.
 
 function naga.tick(args)
