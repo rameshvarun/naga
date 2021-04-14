@@ -6,6 +6,7 @@ A framework for [Love2D](https://love2d.org/), heavily inspired by [DragonRuby](
 - Live-reload on file save (currently only reloads `main.lua`)
 - Full access to the Love2D engine and it's ecosystem
 - An in-game console that you can use to inspect / manipulate state
+- Configureable resolution with pixel-perfect mode
 
 ## Installation
 

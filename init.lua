@@ -22,6 +22,7 @@ local naga = {}
 
 naga.ticksPerSecond = config.ticksPerSecond or 60 -- The game runs at a fixed tick rate.
 naga.canvasSize = config.canvasSize or { width = 1280, height = 720 } -- The game has a fixed canvas size
+naga.pixelPerfect = config.pixelPerfect or false
 
 naga.maxTicks = 4 -- Cap how many ticks can happen on a frame.
 
@@ -125,38 +126,15 @@ function naga.reload()
   require("main")
 end
 
-local canvas = love.graphics.newCanvas(naga.canvasSize.width, naga.canvasSize.height)
+local canvas = nil
 
-function naga.frame()
-  -- Scale and letterbox the game canvas.
-  local windowAspect = love.graphics.getWidth() / love.graphics.getHeight()
-  local canvasAspect = naga.canvasSize.width / naga.canvasSize.height
-  local heightLimited = windowAspect >= canvasAspect
-
-  local scale = love.graphics.getWidth() / naga.canvasSize.width
-  if heightLimited then
-    scale = love.graphics.getHeight() / naga.canvasSize.height
-  end
-
-  local actualSize = {width = scale * naga.canvasSize.width,
-    height = scale * naga.canvasSize.height}
-
-  local offset = {
-    x = love.graphics.getWidth() / 2 - actualSize.width / 2,
-    y = love.graphics.getHeight() / 2 - actualSize.height / 2
-  }
-
-  -- Update canvas to match the scaled size
-  if actualSize.width ~= canvas:getWidth()
-    or actualSize.height ~= canvas:getHeight() then
-      print("Recreating canvas due to resize.")
-    canvas = love.graphics.newCanvas(actualSize.width, actualSize.height)
-  end
-
+function naga.frame(canvas, scale, offset)
   love.graphics.setCanvas(canvas)
 
   love.graphics.origin()
-  love.graphics.scale(scale, scale)
+  if not naga.pixelPerfect then
+    love.graphics.scale(scale, scale)
+  end
 
   -- Construct the args array to pass in to the user-defined tick.
   local args = {}
@@ -181,14 +159,53 @@ function naga.frame()
   releasedKeys = {}
 end
 
+local function calculateScale()
+  -- Calculate the canvas scaling.
+  local windowAspect = love.graphics.getWidth() / love.graphics.getHeight()
+  local canvasAspect = naga.canvasSize.width / naga.canvasSize.height
+  local heightLimited = windowAspect >= canvasAspect
+
+  local scale = love.graphics.getWidth() / naga.canvasSize.width
+  if heightLimited then
+    scale = love.graphics.getHeight() / naga.canvasSize.height
+  end
+  return scale
+end
+
 local frameTimeAccumulator = 0
 function love.draw()
+  local scale = calculateScale()
+
+  -- The size of the canvas in pixels
+  local pixelSize = {width = scale * naga.canvasSize.width,
+    height = scale * naga.canvasSize.height}
+
+  -- The offset at which the canvas is drawn at.
+  local offset = {
+    x = love.graphics.getWidth() / 2 - pixelSize.width / 2,
+    y = love.graphics.getHeight() / 2 - pixelSize.height / 2
+  }
+
+  if naga.pixelPerfect then
+    pixelSize = naga.canvasSize
+  end
+
+  if canvas == nil or pixelSize.width ~= canvas:getWidth() or pixelSize.height ~= canvas:getHeight() then
+    print("Recreating canvas due to resize.")
+    canvas = love.graphics.newCanvas(pixelSize.width, pixelSize.height)
+    if naga.pixelPerfect then
+      canvas:setFilter("nearest", "nearest")
+    end
+  end
+
   frameTimeAccumulator = frameTimeAccumulator + love.timer.getDelta()
   local timestep = 1 / naga.ticksPerSecond
   local numTicks = 0
 
   while frameTimeAccumulator >= timestep do
-    if not naga.paused then naga.frame() end
+    if not naga.paused then
+      naga.frame(canvas, scale, offset)
+    end
     frameTimeAccumulator = frameTimeAccumulator - timestep
     numTicks = numTicks + 1
 
@@ -201,9 +218,11 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.origin()
-  love.graphics.draw(canvas,
-    love.graphics.getWidth() / 2 - canvas:getWidth() / 2,
-    love.graphics.getHeight() / 2 - canvas:getHeight() / 2)
+  if naga.pixelPerfect then
+    love.graphics.draw(canvas, offset.x, offset.y, 0, scale, scale)
+  else
+    love.graphics.draw(canvas, offset.x, offset.y)
+  end
 
   if naga.debug then
     love.graphics.setFont(naga.font(20))
