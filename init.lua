@@ -110,7 +110,7 @@ function love.update(dt)
         lastModifiedTime[filename] = info.modtime
       end
     end)
-    naga.lastScanTime = love.timer.getTime()
+    lastScanTime = love.timer.getTime()
 
     if filesChanged then
       print("Files changed... Reloading game...")
@@ -125,17 +125,9 @@ function naga.reload()
   require("main")
 end
 
-local canvas = love.graphics.newCanvas()
+local canvas = love.graphics.newCanvas(naga.canvasSize.width, naga.canvasSize.height)
 
 function naga.frame()
-  if love.graphics.getWidth() ~= canvas:getWidth()
-    or love.graphics.getHeight() ~= canvas:getHeight() then
-    canvas = love.graphics.newCanvas()
-  end
-
-  love.graphics.setCanvas(canvas)
-  love.graphics.clear()
-
   -- Scale and letterbox the game canvas.
   local windowAspect = love.graphics.getWidth() / love.graphics.getHeight()
   local canvasAspect = naga.canvasSize.width / naga.canvasSize.height
@@ -154,15 +146,17 @@ function naga.frame()
     y = love.graphics.getHeight() / 2 - actualSize.height / 2
   }
 
-  love.graphics.origin()
-  love.graphics.translate(offset.x, offset.y)
-  love.graphics.scale(scale, scale)
-  love.graphics.setScissor()
-  love.graphics.clear(0,0,0)
+  -- Update canvas to match the scaled size
+  if actualSize.width ~= canvas:getWidth()
+    or actualSize.height ~= canvas:getHeight() then
+      print("Recreating canvas due to resize.")
+    canvas = love.graphics.newCanvas(actualSize.width, actualSize.height)
+  end
 
-  --
-  love.graphics.setScissor(love.graphics.getWidth() / 2 - actualSize.width / 2,
-    love.graphics.getHeight() / 2 - actualSize.height / 2, actualSize.width, actualSize.height)
+  love.graphics.setCanvas(canvas)
+
+  love.graphics.origin()
+  love.graphics.scale(scale, scale)
 
   -- Construct the args array to pass in to the user-defined tick.
   local args = {}
@@ -185,9 +179,6 @@ function naga.frame()
 
   pressedKeys = {}
   releasedKeys = {}
-
-  -- Return the scissor to the full screen.
-  love.graphics.setScissor()
 end
 
 local frameTimeAccumulator = 0
@@ -210,7 +201,9 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.origin()
-  love.graphics.draw(canvas, 0, 0)
+  love.graphics.draw(canvas,
+    love.graphics.getWidth() / 2 - canvas:getWidth() / 2,
+    love.graphics.getHeight() / 2 - canvas:getHeight() / 2)
 
   if naga.debug then
     love.graphics.setFont(naga.font(20))
