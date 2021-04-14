@@ -24,6 +24,7 @@ naga.ticksPerSecond = config.ticksPerSecond or 60
 naga.canvasSize = config.canvasSize or { width = 1280, height = 720 }
 
 naga.vec = require(_PACKAGE .. ".vec")
+naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
 
@@ -150,6 +151,13 @@ function naga.frame()
   args.state = state
   args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
 
+  args.keys.arrows = naga.vec(
+    (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0),
+    (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0))
+  if args.keys.arrows:len() > 1 then
+    args.keys.arrows:normalize()
+  end
+
   -- Run the game tick.
   naga.tick(args)
 
@@ -206,6 +214,29 @@ function naga.music(filename, volume)
   end
 end
 
+function naga.sprite(path, pos, options)
+  local image = naga.image(path)
+
+  local r = 0
+  local sx = 1
+  local sy = 1
+
+  local ox = 0
+  local oy = 0
+
+  local color = options.color or naga.color.white
+
+  if options.origin then
+    ox = options.origin.x * image:getWidth()
+    oy = options.origin.y * image:getHeight()
+  end
+
+  local kx = 0
+  local ky = 0
+
+  color:use()
+  love.graphics.draw(image, pos.x, pos.y, r, sx, sy, ox, oy, kx, ky)
+end
 
 function naga.scan(path, eachFunc)
   local items = love.filesystem.getDirectoryItems(path)

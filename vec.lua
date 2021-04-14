@@ -20,10 +20,35 @@ local _PACKAGE = (...):match("^(.+)%.[^%.]+")
 local util = require(_PACKAGE .. ".util")
 
 local vec = {}
+
+setmetatable(vec, {
+  __call = function(_, x, y)
+    return setmetatable({x = x, y = y}, vec)
+  end
+})
+
 vec.__index = vec
+
+local function isnum(a)
+  return type(a) == "number"
+end
+
+local function isvec(v)
+  return type(v) == "table" and isnum(v.x) and isnum(v.y)
+end
 
 function vec:clone()
   return vec(self.x, self.y)
+end
+
+function vec.__mul(a, b)
+  if isvec(a) and isnum(b) then
+    return vec(a.x * b, a.y * b)
+  elseif isnum(a) and isvec(b) then
+    return vec(a * b.x, a * b.y)
+  else
+    error()
+  end
 end
 
 function vec:__tostring()
@@ -31,8 +56,14 @@ function vec:__tostring()
 end
 
 function vec:translate(x, y)
-  self.x = self.x + x
-  self.y = self.y + y
+  if isvec(x) then
+    local other = x
+    self.x = self.x + other.x
+    self.y = self.y + other.y
+  else
+    self.x = self.x + x
+    self.y = self.y + y
+  end
   return self
 end
 
@@ -46,10 +77,21 @@ function vec:translated(x, y)
   return self:clone():translate(x, y)
 end
 
-setmetatable(vec, {
-  __call = function(_, x, y)
-    return setmetatable({x = x, y = y}, vec)
+function vec:len()
+  return math.sqrt(self.x * self.x + self.y * self.y)
+end
+
+function vec:unpack()
+  return self.x, self.y
+end
+
+function vec:normalize()
+  local len = self:len()
+  if len > 0 then
+    self.x = self.x / len
+    self.y = self.y / len
   end
-})
+  return self
+end
 
 return vec
