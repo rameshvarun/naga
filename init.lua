@@ -20,8 +20,13 @@ local config = NAGA_CONF or {} -- This global allows the user to configure Naga
 
 local naga = {}
 
-naga.ticksPerSecond = config.ticksPerSecond or 60
-naga.canvasSize = config.canvasSize or { width = 1280, height = 720 }
+naga.ticksPerSecond = config.ticksPerSecond or 60 -- The game runs at a fixed tick rate.
+naga.canvasSize = config.canvasSize or { width = 1280, height = 720 } -- The game has a fixed canvas size
+
+naga.maxTicks = 4 -- Cap how many ticks can happen on a frame.
+
+naga.debug = false -- Toggle this to move in and out of debug mode.
+naga.paused = false -- Built-in pausing system
 
 -- Load submodules.
 naga.vec = require(_PACKAGE .. ".vec")
@@ -36,8 +41,7 @@ naga.console.ENV.color = naga.color
 naga.console.ENV.util = naga.util
 naga.console.ENV.console = naga.console
 
-naga.debug = false -- Toggle this to move in and out of debug mode.
-naga.paused = false -- Built-in pausing system
+
 
 local lastModifiedTime = {}
 local scanPeriod = 0.5
@@ -190,11 +194,18 @@ local frameTimeAccumulator = 0
 function love.draw()
   frameTimeAccumulator = frameTimeAccumulator + love.timer.getDelta()
   local timestep = 1 / naga.ticksPerSecond
+  local numTicks = 0
 
   while frameTimeAccumulator >= timestep do
     if not naga.paused then naga.frame() end
-
     frameTimeAccumulator = frameTimeAccumulator - timestep
+    numTicks = numTicks + 1
+
+    if numTicks >= naga.maxTicks then
+      print("Max tick exceeded. Resetting accumulator.")
+      frameTimeAccumulator = 0
+      break
+    end
   end
 
   love.graphics.setCanvas()
