@@ -23,35 +23,40 @@ local naga = {}
 naga.ticksPerSecond = config.ticksPerSecond or 60
 naga.canvasSize = config.canvasSize or { width = 1280, height = 720 }
 
+-- Load submodules.
 naga.vec = require(_PACKAGE .. ".vec")
 naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
 
--- Make all modules immediately available on console scope.
+-- Make all submodules directly available on console scope.
 naga.console.ENV.naga = naga
-naga.console.ENV.vec = vec
-naga.console.ENV.util = util
-naga.console.ENV.console = console
+naga.console.ENV.vec = naga.vec
+naga.console.ENV.color = naga.color
+naga.console.ENV.util = naga.util
+naga.console.ENV.console = naga.console
 
-naga.debug = false
+naga.debug = false -- Toggle this to move in and out of debug mode.
+naga.paused = false -- Built-in pausing system
 
 local lastModifiedTime = {}
 local scanPeriod = 0.5
 local lastScanTime = love.timer.getTime()
 
 local function initializeState()
-  return {
+  local state = {
     init = function(self, key, value)
       if self[key] == nil then self[key] = value end
       return self[key]
     end
   }
+
+  naga.console.ENV.state = state -- Make state available from console.
+  return state
 end
 
 local state = initializeState()
 
-naga.console.ENV.state = state -- Make state available from console.
 naga.console.COMMANDS.reset = function() state = initializeState() end
 
 -- The user will override this function for their game.
@@ -68,12 +73,8 @@ local heldKeys = {}
 local pressedKeys = {}
 local releasedKeys = {}
 function love.keypressed(key, scancode, isrepeat)
-  if key == 'f1' then
-    naga.debug = not naga.debug
-
-    if naga.debug then print("Entering debug mode.")
-    else print("Exiting debug mode.") end
-  end
+  if key == 'f1' then naga.debug = not naga.debug end
+  if key == 'escape' then naga.paused = not naga.paused end
   naga.console.keypressed(key, scancode, isrepeat)
 
   if not naga.console.isEnabled() then
@@ -183,13 +184,24 @@ function love.draw()
   local timestep = 1 / naga.ticksPerSecond
 
   while frameTimeAccumulator >= timestep do
-    naga.frame()
+    if not naga.paused then naga.frame() end
+
     frameTimeAccumulator = frameTimeAccumulator - timestep
   end
 
   love.graphics.setCanvas()
   love.graphics.origin()
   love.graphics.draw(canvas, 0, 0)
+
+  if naga.debug then
+    love.graphics.setFont(naga.font(20))
+    love.graphics.print("DEBUG MODE")
+  end
+
+  if naga.paused then
+    love.graphics.setFont(naga.font(40))
+    love.graphics.printf("PAUSED", 0, 0, love.graphics.getWidth(), "center")
+  end
 
   naga.console.draw()
 end
@@ -202,6 +214,17 @@ function naga.image(filename)
     local image = love.graphics.newImage(filename)
     imageCache[filename] = image
     return image
+  end
+end
+
+local fontCache = {}
+function naga.font(size)
+  if fontCache[size] then
+    return fontCache[size]
+  else
+    local font = love.graphics.newFont(size)
+    fontCache[size] = font
+    return font
   end
 end
 

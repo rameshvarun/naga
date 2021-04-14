@@ -52,7 +52,7 @@ function vec.__mul(a, b)
 end
 
 function vec:__tostring()
-  return "<" .. tostring(self.x) .. "," .. tostring(self.y) .. ">"
+  return "<" .. tostring(self.x) .. ", " .. tostring(self.y) .. ">"
 end
 
 function vec:translate(x, y)

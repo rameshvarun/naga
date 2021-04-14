@@ -32,6 +32,15 @@ setmetatable(color, {
   end
 })
 
+function color:__tostring()
+  return "rgba(" ..
+    tostring(self.r) .. ", " ..
+    tostring(self.g) .. ", " ..
+    tostring(self.b) .. ", " ..
+    tostring(self.a) ..
+  ")"
+end
+
 color.__index = color
 
 -- Unpack color.
@@ -59,7 +68,7 @@ color.gray = color.grey
 color.transparent = color(0, 0, 0, 0)
 
 color.red = color(1, 0, 0, 1)
-color.gren = color(0, 1, 0, 1)
+color.green = color(0, 1, 0, 1)
 color.blue = color(0, 0, 1, 1)
 
 color.yellow = color(1, 1, 0, 1)
