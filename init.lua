@@ -15,21 +15,41 @@ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ]]--
 
-local naga = {
-  ticksPerSecond = 60,
-  canvasSize = { width = 1280, height = 720 },
+local _PACKAGE = ... -- Get the current name of the module
+local config = NAGA_CONF or {} -- This global allows the user to configure Naga
 
-  lastModifiedTime = {},
-  scanPeriod = 0.5,
-  lastScanTime = 0,
-}
+local naga = {}
 
-local state = {
-  init = function(self, key, value)
-    if self[key] == nil then self[key] = value end
-    return self[key]
-  end
-}
+naga.ticksPerSecond = config.ticksPerSecond or 60
+naga.canvasSize = config.canvasSize or { width = 1280, height = 720 }
+
+naga.vec = require(_PACKAGE .. ".vec")
+naga.util = require(_PACKAGE .. ".util")
+naga.console = require(_PACKAGE .. ".console.console")
+
+-- Make all modules immediately available on console scope.
+naga.console.ENV.naga = naga
+naga.console.ENV.vec = vec
+naga.console.ENV.util = util
+naga.console.ENV.console = console
+
+local lastModifiedTime = {}
+local scanPeriod = 0.5
+local lastScanTime = love.timer.getTime()
+
+local function initializeState()
+  return {
+    init = function(self, key, value)
+      if self[key] == nil then self[key] = value end
+      return self[key]
+    end
+  }
+end
+
+local state = initializeState()
+
+naga.console.ENV.state = state -- Make state available from console.
+naga.console.COMMANDS.reset = function() state = initializeState() end
 
 -- The user will override this function for their game.
 function naga.tick(args) end
@@ -37,32 +57,41 @@ function naga.tick(args) end
 function love.load()
   naga.scan("", function(filename)
     local info = love.filesystem.getInfo(filename)
-    naga.lastModifiedTime[filename] = info.modtime
+    lastModifiedTime[filename] = info.modtime
   end)
-  naga.lastScanTime = love.timer.getTime()
 end
 
 local heldKeys = {}
 local pressedKeys = {}
 local releasedKeys = {}
 function love.keypressed(key, scancode, isrepeat)
-  heldKeys[key] = true
-  pressedKeys[key] = true
+  naga.console.keypressed(key, scancode, isrepeat)
+
+  if not naga.console.isEnabled() then
+    heldKeys[key] = true
+    pressedKeys[key] = true
+  end
 end
 function love.keyreleased(key)
-  heldKeys[key] = nil
-  releasedKeys[key] = nil
+  if not naga.console.isEnabled() then
+    heldKeys[key] = nil
+    releasedKeys[key] = nil
+  end
+end
+
+function love.textinput(text)
+  naga.console.textinput(text)
 end
 
 function love.update(dt)
-  if love.timer.getTime() >= naga.lastScanTime + naga.scanPeriod then
+  if love.timer.getTime() >= lastScanTime + scanPeriod then
     local filesChanged = false
     naga.scan("", function(filename)
       local info = love.filesystem.getInfo(filename)
 
-      if info.modtime > naga.lastModifiedTime[filename] then
+      if info.modtime > lastModifiedTime[filename] then
         filesChanged = true
-        naga.lastModifiedTime[filename] = info.modtime
+        lastModifiedTime[filename] = info.modtime
       end
     end)
     naga.lastScanTime = love.timer.getTime()
@@ -144,6 +173,8 @@ function love.draw()
   love.graphics.setCanvas()
   love.graphics.origin()
   love.graphics.draw(canvas, 0, 0)
+
+  naga.console.draw()
 end
 
 local imageCache = {}
