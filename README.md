@@ -8,7 +8,7 @@ A framework for [Love2D](https://love2d.org/), heavily inspired by [DragonRuby](
 
 ## Installation
 
-To install, run `git submodule add https://github.com/rameshvarun/naga.git naga`. Or just download as a ZIP,
+To install, run `git submodule add https://github.com/rameshvarun/naga.git naga` in the same directory as your main.lua.
 
 ```lua
 local naga = require "naga"
