@@ -55,6 +55,7 @@ function color:use()
   love.graphics.setColor(self.r, self.g, self.b, self.a)
 end
 
+-- Clear the screen to this color.
 function color:clear()
   love.graphics.clear(self.r, self.g, self.b, self.a)
 end

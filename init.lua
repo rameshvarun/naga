@@ -48,14 +48,19 @@ local lastModifiedTime = {}
 local scanPeriod = 0.5
 local lastScanTime = love.timer.getTime()
 
-local function initializeState()
-  local state = {
-    init = function(self, key, value)
-      if self[key] == nil then self[key] = value end
-      return self[key]
-    end
-  }
+local STATE_FUNCS = {
+  get = function(self, key, value)
+    if self[key] == nil then self[key] = value end
+    return self[key]
+  end,
+  init = function(self, key, initializer)
+    if self[key] == nil then self[key] = initializer() end
+    return self[key]
+  end
+}
 
+local function initializeState()
+  local state = setmetatable({}, {__index = STATE_FUNCS})
   naga.console.ENV.state = state -- Make state available from console.
   return state
 end

@@ -25,4 +25,12 @@ function util.clamp(val, lower, upper)
   end
 end
 
+function util.range(length)
+  local values = {}
+  for i=1,length do
+    table.insert(values, i)
+  end
+  return values
+end
+
 return util

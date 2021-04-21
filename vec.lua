@@ -103,4 +103,20 @@ function vec:normalize()
   return self
 end
 
+function vec:permul(other)
+  return vec(self.x * other.x, self.y * other.y)
+end
+
+function vec.random(...)
+  local args = {...}
+  if #args == 0 then
+    return vec(love.math.random(), love.math.random())
+  elseif #args == 1 then
+    local upper = args[1]
+    return vec(love.math.random() * upper.x, love.math.random() * upper.y)
+  else
+    error("Unexpected number of arguments to vec.random")
+  end
+end
+
 return vec
