@@ -1,7 +1,7 @@
 local naga = require "."
-local vec, tilemap = naga.vec, naga.tilemap
+local vec = naga.vec
 
-local map = tilemap.parse [[
+local map = naga.tilemap.parse [[
 00000000000000000000
 00000000000000000000
 00000000000000000000
@@ -22,7 +22,7 @@ function naga.tick(args)
   naga.sprite("assets/background.png", vec(1024, -250))
 
   -- Draw the level.
-  tilemap.draw(map, 64, {"assets/grass-top.png", "assets/dirt.png", "assets/block.png"})
+  naga.tilemap.draw(map, 64, {"assets/grass-top.png", "assets/dirt.png", "assets/block.png"})
 
   -- Draw the character.
   naga.sprite("assets/character.png", vec(100, 7 * 64 + 16), {origin = vec(0.5, 0.5)})
