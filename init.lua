@@ -42,7 +42,7 @@ naga.console.ENV.color = naga.color
 naga.console.ENV.util = naga.util
 naga.console.ENV.console = naga.console
 
-
+naga.error = nil
 
 local lastModifiedTime = {}
 local scanPeriod = 0.5
@@ -126,9 +126,16 @@ function love.update(dt)
 end
 
 function naga.reload()
+  naga.error = nil
   -- TODO: Support more than just reloading main
   package.loaded["main"] = nil
-  require("main")
+  xpcall(function()
+    require("main")
+  end, naga.onerror)
+end
+
+function naga.onerror(error)
+  naga.error = debug.traceback("Error: " .. error, 2)
 end
 
 local canvas = nil
@@ -158,7 +165,9 @@ function naga.frame(canvas, scale, offset)
   args.mouse.pos = naga.vec(love.mouse.getX() - offset.x, love.mouse.getY() - offset.y) / scale
 
   -- Run the game tick.
-  naga.tick(args)
+  xpcall(function()
+    naga.tick(args)
+  end, naga.onerror)
 
   pressedKeys = {}
   releasedKeys = {}
@@ -208,7 +217,7 @@ function love.draw()
   local numTicks = 0
 
   while frameTimeAccumulator >= timestep do
-    if not naga.paused then
+    if not naga.paused and not naga.error then
       naga.frame(canvas, scale, offset)
     end
     frameTimeAccumulator = frameTimeAccumulator - timestep
@@ -235,8 +244,20 @@ function love.draw()
   end
 
   if naga.paused then
+    naga.color(0, 0, 0, 0.3):use()
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    naga.color.white:use()
+
     love.graphics.setFont(naga.font(40))
     love.graphics.printf("PAUSED", 0, 0, love.graphics.getWidth(), "center")
+  end
+
+  if naga.error then
+    naga.color(0, 0, 0, 0.3):use()
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    naga.color.white:use()
+
+    love.graphics.print(naga.error)
   end
 
   naga.console.draw()
