@@ -19,6 +19,7 @@ local _PACKAGE = ... -- Get the current name of the module
 local config = NAGA_CONF or {} -- This global allows the user to configure Naga
 
 local naga = {}
+_G.naga = naga
 
 naga.ticksPerSecond = config.ticksPerSecond or 60 -- The game runs at a fixed tick rate.
 naga.canvasSize = config.canvasSize or { width = 1280, height = 720 } -- The game has a fixed canvas size
@@ -34,6 +35,7 @@ naga.vec = require(_PACKAGE .. ".vec")
 naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
+naga.tilemap = require(_PACKAGE .. ".tilemap")
 
 -- Make all submodules directly available on console scope.
 naga.console.ENV.naga = naga
@@ -111,7 +113,8 @@ function love.update(dt)
     naga.scan("", function(filename)
       local info = love.filesystem.getInfo(filename)
 
-      if info.modtime > lastModifiedTime[filename] then
+      if lastModifiedTime[filename] == nil or
+          info.modtime > lastModifiedTime[filename] then
         filesChanged = true
         lastModifiedTime[filename] = info.modtime
       end
@@ -191,8 +194,8 @@ function love.draw()
   local scale = calculateScale()
 
   -- The size of the canvas in pixels
-  local pixelSize = {width = scale * naga.canvasSize.width,
-    height = scale * naga.canvasSize.height}
+  local pixelSize = {width = math.floor(scale * naga.canvasSize.width),
+    height = math.floor(scale * naga.canvasSize.height)}
 
   -- The offset at which the canvas is drawn at.
   local offset = {
@@ -305,6 +308,9 @@ end
 
 function naga.sprite(path, pos, options)
   local image = naga.image(path)
+
+  local pos = pos or naga.vec(0, 0)
+  local options = options or {}
 
   local r = 0
   local sx = 1
