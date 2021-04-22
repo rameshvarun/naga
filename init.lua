@@ -36,6 +36,7 @@ naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
 naga.tilemap = require(_PACKAGE .. ".tilemap")
+naga.collision = require(_PACKAGE .. ".collision")
 
 -- Make all submodules directly available on console scope.
 naga.console.ENV.naga = naga
@@ -157,15 +158,20 @@ function naga.frame(canvas, scale, offset)
   args.debug = naga.debug
 
   args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
-  args.keys.arrows = naga.vec(
-    (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0),
-    (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0))
+
+  args.keys.left_right = (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0)
+  args.keys.up_down = (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0)
+
+  args.keys.arrows = naga.vec(args.keys.left_right, args.keys.up_down)
   if args.keys.arrows:len() > 1 then
     args.keys.arrows:normalize()
   end
 
   args.mouse = {}
   args.mouse.pos = naga.vec(love.mouse.getX() - offset.x, love.mouse.getY() - offset.y) / scale
+
+  -- Reset the collision world.
+  naga.collision.reset()
 
   -- Run the game tick.
   xpcall(function()
@@ -235,6 +241,7 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.origin()
+  naga.color.white:use()
   if naga.pixelPerfect then
     love.graphics.draw(canvas, offset.x, offset.y, 0, scale, scale)
   else

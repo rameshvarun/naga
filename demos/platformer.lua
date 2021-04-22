@@ -1,4 +1,4 @@
-local naga = require "."
+local naga = require "naga"
 local vec = naga.vec
 
 local map = naga.tilemap.parse [[
@@ -25,5 +25,18 @@ function naga.tick(args)
   naga.tilemap.draw(map, 64, {"assets/grass-top.png", "assets/dirt.png", "assets/block.png"})
 
   -- Draw the character.
-  naga.sprite("assets/character.png", vec(100, 7 * 64 + 16), {origin = vec(0.5, 0.5)})
+  local player = args.state:get("player", {
+    pos = vec(100, 5 * 64 + 16),
+    vel = vec(0, 0)
+  })
+  naga.sprite("assets/character.png", player.pos, {origin = vec(0.5, 0.5)})
+
+  naga.collision.tilemap(map, 64)
+  local playerCol = naga.collision.aabb(player.pos, vec(-20, -10), vec(20, 64/2 + 16))
+
+  -- player.vel:translate(0, 0.2)
+  -- player.pos:translate(player.vel)
+
+  -- This draws the collision boxes when debug mode is enabled.
+  naga.collision.draw()
 end

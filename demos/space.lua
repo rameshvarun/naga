@@ -1,4 +1,4 @@
-local naga = require "." -- Load naga
+local naga = require "naga" -- Load naga
 local vec, color, util = naga.vec, naga.color, naga.util -- Shortcuts
 
 function naga.tick(args)
@@ -32,8 +32,8 @@ function naga.tick(args)
   ship:clamp(vec(0, 0), vec(1280, 720)) -- Clamp ship on screen
   naga.sprite("assets/ship.png", ship, { origin = vec(0.5, 0.5) }) -- Draw ship
 
-  -- Shoot lasers with space.
-  if args.keys.pressed.space then
+  -- Shoot lasers with z.
+  if args.keys.pressed.z then
     table.insert(lasers, ship:translated(0, -40))
     naga.sound("assets/laser.ogg")
   end

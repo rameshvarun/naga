@@ -3,6 +3,6 @@ function love.conf(t)
   t.version = "11.3"
   t.window.highdpi = true
 
-  t.window.width = 320
-  t.window.height = 240
+  t.window.width = 1280
+  t.window.height = 720
 end
