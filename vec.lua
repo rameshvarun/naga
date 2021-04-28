@@ -51,6 +51,22 @@ function vec.__mul(a, b)
   end
 end
 
+function vec.__sub(a, b)
+  if isvec(a) and isvec(b) then
+    return vec(a.x - b.x, a.y - b.y)
+  else
+    error()
+  end
+end
+
+function vec.__add(a, b)
+  if isvec(a) and isvec(b) then
+    return vec(a.x + b.x, a.y + b.y)
+  else
+    error()
+  end
+end
+
 function vec.__div(a, b)
   if isvec(a) and isnum(b) then
     return vec(a.x / b, a.y / b)

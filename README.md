@@ -16,10 +16,12 @@ To install, run `git submodule add https://github.com/rameshvarun/naga.git naga`
 local naga = require "naga"
 ```
 
-## Example Usage
+## Examples
+
+### Space Shooter Example
 
 <p align="center">
-  <img width="320" height="240" src="demo.gif">
+  <img width="320" height="240" src="demos/space.gif">
 </p>
 
 ```lua
@@ -62,5 +64,43 @@ function naga.tick(args)
     table.insert(lasers, ship:translated(0, -40))
     naga.sound("assets/laser.ogg")
   end
+end
+```
+
+### Platformer Example
+
+<p align="center">
+  <img src="demos/platformer.png">
+</p>
+
+```lua
+local naga = require "naga"
+local vec = naga.vec
+
+local map = naga.tilemap.parse [[
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000330000000000
+00000000000000000000
+11111111111111111111
+22222222222222222222
+22222222222222222222
+22222222222222222222
+]]
+
+function naga.tick(args)
+  -- Draw the background.
+  naga.sprite("assets/background.png", vec(0, -250))
+  naga.sprite("assets/background.png", vec(1024, -250))
+
+  -- Draw the level.
+  naga.tilemap.draw(map, 64, {"assets/grass-top.png", "assets/dirt.png", "assets/block.png"})
+
+  -- Draw the character.
+  naga.sprite("assets/character.png", vec(100, 7 * 64 + 16), {origin = vec(0.5, 0.5)})
 end
 ```

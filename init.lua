@@ -19,6 +19,7 @@ local _PACKAGE = ... -- Get the current name of the module
 local config = NAGA_CONF or {} -- This global allows the user to configure Naga
 
 local naga = {}
+_G.naga = naga
 
 naga.ticksPerSecond = config.ticksPerSecond or 60 -- The game runs at a fixed tick rate.
 naga.canvasSize = config.canvasSize or { width = 1280, height = 720 } -- The game has a fixed canvas size
@@ -35,6 +36,8 @@ naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
 naga.doc = require(_PACKAGE .. ".doc")
+naga.tilemap = require(_PACKAGE .. ".tilemap")
+naga.collision = require(_PACKAGE .. ".collision")
 
 -- Make all submodules directly available on console scope.
 naga.console.ENV.naga = naga
@@ -123,7 +126,8 @@ function love.update(dt)
     naga.scan("", function(filename)
       local info = love.filesystem.getInfo(filename)
 
-      if info.modtime > lastModifiedTime[filename] then
+      if lastModifiedTime[filename] == nil or
+          info.modtime > lastModifiedTime[filename] then
         filesChanged = true
         lastModifiedTime[filename] = info.modtime
       end
@@ -166,15 +170,20 @@ function naga.frame(canvas, scale, offset)
   args.debug = naga.debug
 
   args.keys = { held = heldKeys, pressed = pressedKeys, released = releasedKeys }
-  args.keys.arrows = naga.vec(
-    (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0),
-    (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0))
+
+  args.keys.left_right = (args.keys.held.right and 1 or 0) - (args.keys.held.left and 1 or 0)
+  args.keys.up_down = (args.keys.held.down and 1 or 0) - (args.keys.held.up and 1 or 0)
+
+  args.keys.arrows = naga.vec(args.keys.left_right, args.keys.up_down)
   if args.keys.arrows:len() > 1 then
     args.keys.arrows:normalize()
   end
 
   args.mouse = {}
   args.mouse.pos = naga.vec(love.mouse.getX() - offset.x, love.mouse.getY() - offset.y) / scale
+
+  -- Reset the collision world.
+  naga.collision.reset()
 
   -- Run the game tick.
   xpcall(function()
@@ -203,8 +212,8 @@ function love.draw()
   local scale = calculateScale()
 
   -- The size of the canvas in pixels
-  local pixelSize = {width = scale * naga.canvasSize.width,
-    height = scale * naga.canvasSize.height}
+  local pixelSize = {width = math.floor(scale * naga.canvasSize.width),
+    height = math.floor(scale * naga.canvasSize.height)}
 
   -- The offset at which the canvas is drawn at.
   local offset = {
@@ -244,6 +253,7 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.origin()
+  naga.color.white:use()
   if naga.pixelPerfect then
     love.graphics.draw(canvas, offset.x, offset.y, 0, scale, scale)
   else
@@ -320,6 +330,9 @@ naga.doc(naga.music, [[Plays looping background music.]])
 
 function naga.sprite(path, pos, options)
   local image = naga.image(path)
+
+  local pos = pos or naga.vec(0, 0)
+  local options = options or {}
 
   local r = 0
   local sx = 1
