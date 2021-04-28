@@ -34,6 +34,7 @@ naga.vec = require(_PACKAGE .. ".vec")
 naga.color = require(_PACKAGE .. ".color")
 naga.util = require(_PACKAGE .. ".util")
 naga.console = require(_PACKAGE .. ".console.console")
+naga.doc = require(_PACKAGE .. ".doc")
 
 -- Make all submodules directly available on console scope.
 naga.console.ENV.naga = naga
@@ -41,6 +42,7 @@ naga.console.ENV.vec = naga.vec
 naga.console.ENV.color = naga.color
 naga.console.ENV.util = naga.util
 naga.console.ENV.console = naga.console
+naga.console.ENV.help = naga.doc.help
 
 naga.error = nil
 
@@ -68,8 +70,18 @@ end
 local state = initializeState()
 
 naga.console.COMMANDS.reset = function() state = initializeState() end
+naga.console.COMMAND_HELP.reset = "Reset the game state."
+
 naga.console.COMMANDS.pause = function() naga.paused = true end
+naga.console.COMMAND_HELP.pause = "Pause the game."
+
 naga.console.COMMANDS.unpause = function() naga.paused = false end
+naga.console.COMMAND_HELP.unpause = "Resume tne game from paused state."
+
+naga.console.HELP_TEXT = [[==== Welcome to the Naga In-Game Console ====
+- Type any expression or statement to evaluate it. Use `state` to inspect the current game state.
+- Type a built-in command to run it (type `commands` to list all commands).
+- Use the help function to print documentation. Eg: `help(naga.sound)` ]]
 
 -- The user will override this function for their game.
 function naga.tick(args) end
@@ -274,6 +286,7 @@ function naga.image(filename)
   end
 end
 
+
 local fontCache = {}
 function naga.font(size)
   if fontCache[size] then
@@ -290,6 +303,7 @@ function naga.sound(filename)
   -- in the pool are currently playing.
   love.audio.newSource(filename, 'static'):play()
 end
+naga.doc(naga.sound, [[Plays a single sound effect.]])
 
 local currentMusic = nil
 function naga.music(filename, volume)
@@ -302,6 +316,7 @@ function naga.music(filename, volume)
     currentMusic:play()
   end
 end
+naga.doc(naga.music, [[Plays looping background music.]])
 
 function naga.sprite(path, pos, options)
   local image = naga.image(path)
@@ -327,7 +342,7 @@ function naga.sprite(path, pos, options)
   love.graphics.draw(image, pos.x, pos.y, r, sx, sy, ox, oy, kx, ky)
 end
 
-function naga.scan(path, eachFunc)
+function naga.scan (path, eachFunc)
   local items = love.filesystem.getDirectoryItems(path)
   for _, filename in pairs(items) do
     local fullpath = path .. "/" .. filename
